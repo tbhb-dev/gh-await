@@ -63,9 +63,8 @@ jobs:
       # lock's stored SHAs, and fails on any difference from the committed
       # tree. That catches a vendored file edited in place, a sync nobody
       # committed, and a manifest bump whose vendir.lock.yml is stale. The
-      # in-place sync is safe on a clean CI checkout. The local lint bar runs
-      # the locked scratch comparison, check-vendored, so it can't overwrite
-      # unstaged edits.
+      # local check-vendored task runs the same in-place resync, so run it on
+      # a tree whose payload changes are staged.
       - name: Check the vendored payload
         run: mise run devtools:check-vendored
 
