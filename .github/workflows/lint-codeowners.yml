@@ -10,16 +10,14 @@
 # (`GITHUB_REPOSITORY`, the PR head SHA) and owns its concurrency group, so
 # this caller stays thin. Pinned by commit SHA; the trailing tag comment
 # marks the matching release for Renovate.
+# Pull requests only: the reusable workflow reads the PR head SHA, which a push or a manual run doesn't have.
 name: lint-codeowners
 
 on:
-  push:
-    branches: [main]
   pull_request:
     paths:
       - .github/CODEOWNERS
       - '**'
-  workflow_dispatch:
 
 permissions:
   contents: read
