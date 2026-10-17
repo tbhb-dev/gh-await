@@ -21,3 +21,4 @@ deadcode
 gomodscan
 [Ll]ockfiles?
 hostnames?
+ci

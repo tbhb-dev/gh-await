@@ -10,6 +10,10 @@ The binaries in `cmd/gh-await/` and `cmd/gh-awaiter/` each expose a `version` co
 
 Go checks run through `mise run lint-go-all`, with a separate formatting check at `mise run lint-go-fmt`. Coverage thresholds apply through `mise run cover-go`. To check for data races, use `mise run test-go-race`. Refresh dependencies with `mise run vendor`, then check for dependency drift with `mise run vendor-check`. The drift gate also detects files outside the index. Go tool directives pin analysis tools, whose sources join app dependencies in `vendor/`.
 
+## Continuous integration
+
+GitHub Actions runs the same gates as the local tasks. The `lint`, `test`, `vuln`, and `vendor-check` jobs in `ci.yml` call `mise run` tasks of those names, and `test` reports the result of the Linux and macOS test matrix. `security.yml` runs the `gitleaks` scan over the full history and uploads the govulncheck and gomodscan findings to code scanning. `codeql.yml` analyzes the Go source, and Renovate keeps the dependencies and the devtools pins current. `mise run lint` also lints the workflow files.
+
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).
