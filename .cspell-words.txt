@@ -19,9 +19,12 @@ golangci
 gomod
 gomodscan
 govulncheck
+gochecknoglobals
+gochecknoinits
 ldflags
 lockfiles
 mktemp
+nolint
 pathspecs
 pipefail
 preapproval
@@ -31,6 +34,7 @@ sarif
 shellcheck
 shfmt
 slotsdir
+stretchr
 tbhb
 testcoverage
 textfmt

@@ -49,6 +49,13 @@ repos:
 
   - repo: local
     hooks:
+      - id: go-fmt
+        name: go format check
+        entry: mise run lint-go-fmt
+        language: system
+        types: [go]
+        pass_filenames: false
+
       - id: ryl
         name: ryl
         entry: mise run devtools:lint-yaml

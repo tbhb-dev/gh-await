@@ -6,6 +6,8 @@ Guidance for AI coding agents working in this repository. This file is the canon
 
 gh-await is a Go project with two command-line binaries, `gh-await` and `gh-awaiter`. The module path is `github.com/tbhb-dev/gh-await`. Each binary has its own directory under `cmd/`, `internal/` holds private packages, and `tools/` holds the bash helpers the shared devtools payload lacks. The repository has no Python or Node setup.
 
+Both binaries expose only the `version` command. Each entry point calls `Run` in its package's `run.go`. Tests inject process streams. `internal/buildmeta/` supplies linker-injected metadata and a runtime build-info fallback for the version. `mise run build` writes both binaries to `bin/` through the payload's linker flags script.
+
 ## Public repository
 
 This repository is public. Never commit a hostname, an address outside the documentation ranges, an account, project or organization identifier, a token, a password-manager reference, or any other credential. Placeholders use `example.com`, `example.invalid`, and the reserved documentation address ranges. Private values live only in `mise.local.toml`, which a gitignore entry keeps out of history, and tasks read them from the environment through `GH_AWAIT_PRIVATE_STRINGS`. Copy `mise.local.toml.example` to start one. `mise run lint-leaks` scans the working tree for those values and for private-network and credential patterns, and gitleaks scans the history with `mise run devtools:gitleaks`.
@@ -17,6 +19,9 @@ mise pins the tools and defines the tasks. The shared half arrives from `tbhb-de
 - `mise run lint` runs every lint gate in order.
 - `mise run test` runs the test suites.
 - `mise run check` runs both.
+- `mise run lint-go-all` checks Go code and architecture. `mise run lint-go-fmt` checks formatting.
+- `mise run cover-go` enforces the payload's coverage thresholds. Add tests when coverage drops below a threshold.
+- `mise run vendor` refreshes dependencies. `mise run vendor-check` rejects tracked drift and files outside the index. Keep Go tool directives and their vendored sources in sync.
 - `mise run lint-draft <file>` runs every prose gate over one draft.
 - `mise run devtools:update-pins <version>` moves every devtools pin together. Redeploy the agent primitives with `mise run apm-sync` instead of a bare `apm install`.
 
