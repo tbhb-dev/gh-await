@@ -23,9 +23,9 @@ mise pins the tools and defines the tasks. The shared half arrives from `tbhb-de
 - `mise run cover-go` enforces the payload's coverage thresholds. Add tests when coverage drops below a threshold.
 - `mise run vendor` refreshes dependencies. `mise run vendor-check` rejects tracked drift and files outside the index. Keep Go tool directives and their vendored sources in sync.
 - `mise run lint-draft <file>` runs every prose gate over one draft.
-- `mise run devtools:update-pins <version>` moves every devtools pin together. Redeploy the agent primitives with `mise run apm-sync` instead of a bare `apm install`.
+- `mise run devtools:update-pins <version>` moves every devtools pin together. Redeploy the agent primitives with `mise run devtools:apm-sync` instead of a bare `apm install`.
 
-A task in `mise.toml` that replaces or narrows a payload task has a comment with the number of the devtools issue behind it. The `guard-markdown` binary must be on PATH for `lint-markdown-wrap` and the Claude write hook. `mise run bootstrap` installs it through `mise run install-guard-markdown`, which takes the version from the devtools pin in `apm.yml`. Keep the Go bin directory on PATH.
+A task in `mise.toml` that works around a payload gap has a comment with the number of the devtools issue behind it. The `guard-markdown` binary backs `devtools:lint-markdown-wrap` and the Claude write hook. `mise.toml` pins it as a tool at the devtools release, so `mise install` puts it on the mise PATH. Run agent sessions under `mise exec --` so the hook resolves it too.
 
 ## Continuous integration
 
@@ -43,7 +43,7 @@ Run the `pr` skill. Draft the description in the repo-root file `PR_AGENTDESC.md
 
 ## Markdown
 
-Write each paragraph on one line, with no hard wrapping. `mise run lint-markdown-wrap` enforces it.
+Write each paragraph on one line, with no hard wrapping. `mise run devtools:lint-markdown-wrap` enforces it.
 
 ## Stash and work in progress
 

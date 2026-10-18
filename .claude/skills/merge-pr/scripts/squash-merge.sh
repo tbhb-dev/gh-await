@@ -82,7 +82,7 @@ here=$DT_LIB_DIR
 
 branch=$(gitr rev-parse --abbrev-ref HEAD)
 if [ -z "$number" ]; then
-  number=$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty' 2>/dev/null || true)
+  number=$(dt_gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty') || exit $?
   [ -n "$number" ] || die "no open pull request for ${branch}. Pass a number explicitly."
 fi
 
@@ -102,11 +102,10 @@ printf 'drafted for #%s\n' "$number"
 view=$state/merge.view.json
 read_live() {
   mp_view "$number" "$view" \
-    state,isDraft,mergeable,mergeStateStatus,reviewDecision,headRefName,baseRefName,headRefOid,isCrossRepository,statusCheckRollup ||
-    die "cannot read pull request #${number}."
+    state,isDraft,mergeable,mergeStateStatus,reviewDecision,headRefName,baseRefName,headRefOid,isCrossRepository,statusCheckRollup || exit $?
   head_oid=$(mp_field "$view" headRefOid)
   base_ref=$(mp_field "$view" baseRefName)
-  base_oid=$(mp_base_oid "$base_ref") || die "cannot read where ${base_ref} points."
+  base_oid=$(mp_base_oid "$base_ref") || exit $?
 }
 
 require_reviewed() {
@@ -139,7 +138,7 @@ want_login=$(dt_conf gh_login)
 if [ -z "$want_login" ]; then
   printf 'gh_login is not configured; skipping the account check\n'
 else
-  login=$(gh api user --jq .login 2>/dev/null) || die "gh could not say which account it is signed in as."
+  login=$(dt_gh_login) || exit $?
   [ "$login" = "$want_login" ] ||
     die "gh is signed in as ${login:-nobody}, not the configured ${want_login}. Nothing was merged."
   printf 'signed in as %s\n' "$login"
@@ -157,7 +156,10 @@ step "checking #${number}"
 wait_limit=${MERGE_MERGEABLE_WAIT:-60}
 poll_every=${MERGE_MERGEABLE_POLL:-3}
 waited=0
-while [ "$(mp_field "$view" mergeable)" = UNKNOWN ] || [ "$(mp_field "$view" mergeStateStatus)" = UNKNOWN ]; do
+while :; do
+  mergeable=$(mp_field "$view" mergeable) || exit $?
+  merge_state=$(mp_field "$view" mergeStateStatus) || exit $?
+  [ "$mergeable" = UNKNOWN ] || [ "$merge_state" = UNKNOWN ] || break
   [ "$waited" -lt "$wait_limit" ] ||
     die "#${number} still reports its mergeability as UNKNOWN after ${wait_limit}s. Try again shortly."
   [ "$waited" -gt 0 ] || printf 'GitHub is still computing mergeability; waiting up to %ss\n' "$wait_limit"
@@ -169,17 +171,14 @@ done
 
 pr_state=$(mp_field "$view" state)
 [ "$pr_state" = OPEN ] || die "#${number} is ${pr_state}, not OPEN."
-[ "$(mp_field "$view" isDraft)" = false ] || die "#${number} is a draft. Mark it ready before merging."
+is_draft=$(mp_field "$view" isDraft) || exit $?
+[ "$is_draft" = false ] || die "#${number} is a draft. Mark it ready before merging."
 mergeable=$(mp_field "$view" mergeable)
 [ "$mergeable" = MERGEABLE ] || die "#${number} is not mergeable (${mergeable:-unknown})."
+mp_require_reviews "$view" "$number"
 merge_state=$(mp_field "$view" mergeStateStatus)
 [ "$merge_state" = CLEAN ] ||
   die "#${number} is not ready to merge (${merge_state:-unknown}). BEHIND or DIRTY goes to the rebase skill."
-review_decision=$(mp_field "$view" reviewDecision)
-case ${review_decision:-NONE} in
-APPROVED | NONE) ;;
-*) die "#${number} review decision is ${review_decision}, not approved." ;;
-esac
 cross_repo=$(mp_field "$view" isCrossRepository)
 case $cross_repo in
 true | false) ;;
@@ -238,7 +237,9 @@ read_live
 require_reviewed
 message=$state/merge.message
 cp "$SQUASH_DRAFT" "$message"
-[ "$(dt_digest "$message")" = "$(dt_stamp_value squash draft)" ] ||
+message_digest=$(dt_digest "$message") || exit $?
+reviewed_digest=$(dt_stamp_value squash draft) || exit $?
+[ "$message_digest" = "$reviewed_digest" ] ||
   die "${SQUASH_DRAFT} changed while it was being copied. Review it again."
 subject=$(head -1 "$message")
 body=$state/merge.body
@@ -248,7 +249,7 @@ awk 'NR > 1' "$message" | awk 'NF { seen = 1 } seen' >"$body"
 # --- merge -----------------------------------------------------------
 
 step "squashing #${number} into ${base_ref}"
-gh pr merge "$number" --squash --match-head-commit "$reviewed_head" \
+dt_gh pr merge "$number" --squash --match-head-commit "$reviewed_head" \
   --subject "$subject" --body-file "$body"
 
 # --- clean up --------------------------------------------------------
@@ -292,4 +293,4 @@ elif gitr rev-parse --verify --quiet "refs/heads/$head_ref" >/dev/null; then
 fi
 
 step "done"
-gh pr view "$number" --json url,state --jq '"merged: \(.url) (\(.state))"'
+dt_gh pr view "$number" --json url,state --jq '"merged: \(.url) (\(.state))"'
