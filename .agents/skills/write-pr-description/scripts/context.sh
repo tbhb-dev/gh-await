@@ -2,11 +2,12 @@
 # context — everything drafting a pull request description needs, and
 # nothing else.
 #
-# The write-pr-description SKILL.md inlines this through the !`...`
-# preprocessor, so a forked writer starts from a settled picture rather
-# than spending its first several calls rediscovering one. That fork is
-# the point: the branch diff lands in the writer's context instead of
-# the caller's, and the caller never pays for it.
+# The Claude write-pr-description SKILL.md inlines this through the
+# !`...` preprocessor, and the Codex one runs it first, so a delegated
+# writer starts from a settled picture rather than spending its first
+# several calls rediscovering one. That delegation is the point: the
+# branch diff lands in the writer's context instead of the caller's,
+# and the caller never pays for it.
 #
 # Read-only throughout. The pr preflight owns the workflow
 # preconditions and the stale-draft sweep; this gathers material.
@@ -118,6 +119,7 @@ fi
 section "diff"
 if [ "$landing" != "0" ]; then
   patch=$(gitr diff --no-ext-diff "$base_ref...HEAD")
+  # shellcheck disable=SC2312 # Only formats diagnostic output; no decision uses the status.
   if [ "$(printf '%s\n' "$patch" | wc -l)" -le "$DIFF_LINE_CAP" ]; then
     printf '%s\n' "$patch"
   else

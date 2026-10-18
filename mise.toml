@@ -15,9 +15,10 @@ vendir = "0.46.1"
 apm = "0.33.0"
 shfmt = "3.14.1"
 jq = "1.8.2"
-# Local workaround for tbhb-dev/devtools#176: the payload pins go 1.27.1,
-# which trails the 1.27.2 security release. Drop this line at the v0.12 bump.
-go = "1.27.2"
+# guard-markdown backs lint-markdown-wrap and the Claude write hook.
+# devtools:update-pins moves this pin with the others, and
+# devtools:check-pins holds it to the same release.
+"go:github.com/tbhb-dev/devtools/cmd/guard-markdown" = "v0.12.0"
 
 [env]
 DEVTOOLS_LOCK_PLATFORMS = "linux-x64,macos-arm64"
@@ -25,6 +26,7 @@ DEVTOOLS_GO_MODULES_MODE = "vendor"
 
 [task_config]
 includes = [
+  ".devtools/tasks/apm.toml",
   ".devtools/tasks/fix.toml",
   ".devtools/tasks/format.toml",
   ".devtools/tasks/git-hooks.toml",
@@ -45,7 +47,6 @@ run = [
   "vendir sync",
   "mise run install-toolchain",
   "mise run install-tools",
-  "mise run install-guard-markdown",
   "mise run devtools:prek-install",
   "mise run install-pre-push",
 ]
@@ -57,23 +58,6 @@ run = "mise install"
 [tasks.install-tools]
 description = "Download the Vale style packages .vale.ini names"
 run = "vale sync"
-
-# guard-markdown backs lint-markdown-wrap and the Claude write hook, and mise
-# has no pin for it. The version comes from the devtools pin in apm.yml, the
-# site devtools:update-pins moves, so a pin bump moves this install too.
-[tasks.install-guard-markdown]
-description = "Install guard-markdown at the version the devtools pin in apm.yml names"
-run = '''
-#!/usr/bin/env bash
-set -euo pipefail
-version=$(bash tools/devtools-pin.sh)
-go install "github.com/tbhb-dev/devtools/cmd/guard-markdown@${version}"
-gobin="$(go env GOPATH)/bin"
-case ":$PATH:" in
-  *":$gobin:"*) ;;
-  *) echo "add $gobin to PATH so guard-markdown resolves" >&2 ;;
-esac
-'''
 
 # The payload's drift gate. It resyncs in place and compares against the git
 # index, so it fails on a tree whose payload is not yet staged.
@@ -100,34 +84,6 @@ run = "bash $DEVTOOLS_DIR/scripts/install-pre-push.sh"
 description = "Fail locally when the leak-check pre-push hook isn't installed"
 run = "mise run devtools:check-leak-hook"
 
-# APM merges hook declarations into each harness's settings additively and
-# never reconciles, while `apm audit --ci` replays the same merge from an
-# empty tree and compares. Clearing the keys APM owns first hands the
-# merge the empty slate its replay assumes. Only those keys go, so a
-# hand-written setting elsewhere in each file survives. devtools:update-pins
-# calls this task by name. The payload's own apm-sync also runs lint-apm,
-# which needs tools/apm_audit.py. This repo owns no Python, so only
-# lint-apm-deploy follows the install, until v0.12 ships lint-apm (#140).
-[tasks.apm-sync]
-description = "Redeploy the APM primitives from a cleared hook state, then check the deploy set"
-depends_post = ["lint-apm-deploy"]
-run = '''
-#!/usr/bin/env bash
-set -euo pipefail
-clear_key() {
-  local file=$1 key=$2
-  [[ -f $file ]] || return 0
-  jq "del(.$key)" "$file" >"$file.tmp"
-  mv "$file.tmp" "$file"
-  [[ $(jq 'length' "$file") -gt 0 ]] || rm -f "$file"
-}
-clear_key .claude/settings.json hooks
-clear_key .agents/hooks.json apm
-clear_key .codex/hooks.json hooks
-rm -f .claude/apm-hooks.json .agents/apm-hooks.json .codex/apm-hooks.json
-apm install
-'''
-
 # The bare devtools pin plus `target: [claude, codex]` is assumed to
 # deploy the claude, common, and codex packages and nothing for
 # antigravity (D13). This holds that assumption to the recorded deploy.
@@ -153,52 +109,21 @@ run = [
   "bash $DEVTOOLS_DIR/scripts/check-leaks.sh PR_AGENTDESC.md",
 ]
 
-# The draft task is scoped to the one file it receives, and the fix-prose
-# skills call it by name. The script is a copy of the devtools one.
+# The draft and replacement tasks the fix-prose skills call by name. Both
+# take their bodies from the payload's skill-contract templates.
 [tasks.lint-draft]
 extends = "devtools:lint-draft"
-run = 'bash tools/lint-draft.sh "$usage_file"'
 
-# Body adapted from devtools/mise.toml [tasks.lint-prose]; the glob is why it
-# stays repo-specific. The deployed agent primitives answer to upstream's
-# prose, so the harness trees are excluded (tbhb-dev/devtools#180).
+[tasks.fix-prose-replacements]
+extends = "devtools:fix-prose-replacements"
+
+# The payload's file selection already drops the vendored, deployed, and
+# gitignored trees. The glob drops the rest this repo's prose rules
+# shouldn't judge: the license text, the Vale styles, and the vendored
+# payload, which answers to upstream's prose.
 [tasks.lint-prose]
 extends = "devtools:lint-prose"
-run = "vale --output=ai-tells-agent.tmpl --glob='!{LICENSE,.vale/*,tmp/*,vendor/*,apm_modules/*,.claude/*,.codex/*,.agents/*,.worktrees/*,COMMIT_AGENTMSG,PR_AGENTDESC.md,SQUASH_AGENTMSG}' $usage_paths"
-
-# Invocation args arrive as shell positionals ahead of the file list, so
-# `mise run lint-markdown-wrap -- --fix` reaches guard-markdown as
-# `--fix <files>`. --others puts a new file in the gate before anyone stages
-# it. The pathspecs drop vendored and deployed trees (tbhb-dev/devtools#180).
-[tasks.lint-markdown-wrap]
-description = "Fail if any Markdown paragraph spans more than one line"
-run = '''
-#!/usr/bin/env bash
-set -euo pipefail
-files=$(git ls-files --cached --others --exclude-standard -- '*.md' ':!:vendor/**' ':!:apm_modules/**' ':!:.claude/**' ':!:.codex/**' ':!:.agents/**')
-if [[ -n $files ]]; then guard-markdown "$@" $files; fi
-'''
-
-# Two tasks, not one: the fix-pr skill maps a failing "shell" check to
-# `mise run lint-shell && mise run lint-shell-fmt` (fix-pr/scripts/diagnose.sh).
-# The pathspecs drop vendored and deployed trees (tbhb-dev/devtools#180).
-[tasks.lint-shell]
-description = "Lint the shell scripts via shellcheck"
-run = '''
-#!/usr/bin/env bash
-set -euo pipefail
-files=$(git ls-files --cached --others --exclude-standard -- '*.sh' ':!:vendor/**' ':!:apm_modules/**' ':!:.claude/**' ':!:.codex/**' ':!:.agents/**')
-[[ -z $files ]] || shellcheck $files
-'''
-
-[tasks.lint-shell-fmt]
-description = "Fail if shfmt would reformat any shell script"
-run = '''
-#!/usr/bin/env bash
-set -euo pipefail
-files=$(git ls-files --cached --others --exclude-standard -- '*.sh' ':!:vendor/**' ':!:apm_modules/**' ':!:.claude/**' ':!:.codex/**' ':!:.agents/**')
-[[ -z $files ]] || shfmt -d $files
-'''
+env = { DEVTOOLS_PROSE_GLOB = "!{LICENSE,.vale/*,.devtools/**}" }
 
 [tasks.lint]
 extends = "devtools:lint"
@@ -207,38 +132,45 @@ run = [
   "mise run lint-leaks",
   "mise run lint-hooks",
   "mise run devtools:check-pins",
+  "mise run devtools:check-toolchain",
+  "mise run devtools:lint-apm",
   "mise run lint-apm-deploy",
   "mise run lint-prose",
   "mise run devtools:lint-spelling",
   "mise run devtools:lint-markdown",
-  "mise run lint-markdown-wrap",
+  "mise run devtools:lint-markdown-wrap",
   "mise run devtools:lint-config",
   "mise run devtools:lint-yaml",
   "mise run devtools:lint-toml",
   "mise run devtools:lint-mise",
   "mise run devtools:lint-workflows",
-  "mise run lint-shell",
-  "mise run lint-shell-fmt",
+  "mise run devtools:lint-shell",
+  "mise run devtools:lint-shell-fmt",
+  "mise run devtools:lint-curl",
   "mise run lint-go-all",
   "mise run lint-go-fmt",
 ]
 
-[tasks.test-tools]
-description = "Test the devtools pin parser"
-run = "bats tools/devtools-pin.bats"
+[tasks.test-leaks]
+description = "Test the payload's leak check"
+run = "bats .devtools/scripts/check-leaks.bats"
 
-# test-leaks stays out until v0.12: the v0.11.0 check-leaks.bats test 25 fails upstream (tbhb-dev/devtools#184).
 [tasks.test]
 description = "Run every test suite"
-run = ["mise run test-tools", "mise run test-go", "mise run cover-go"]
+run = ["mise run test-leaks", "mise run test-go", "mise run cover-go"]
 
 [tasks.check]
 description = "Fast quality bar: lint then test"
 run = ["mise run lint", "mise run test"]
 
 [tasks.check-all]
-description = "Deeper bar: check plus the full-history gitleaks scan"
-run = ["mise run check", "mise run devtools:gitleaks"]
+description = "Deeper bar: check plus the full-history gitleaks scan and the dependency and reachable-vulnerability scans"
+run = [
+  "mise run check",
+  "mise run devtools:gitleaks",
+  "mise run devtools:gomodscan",
+  "mise run devtools:vuln",
+]
 
 # The v0.11.0 payload lacks run, clean, and lint-go-fmt (#157).
 [tasks.run]
@@ -277,7 +209,7 @@ if [[ -n $untracked_before || -n $untracked_after ]] || ! git diff --exit-code -
 fi
 '''
 
-# Local workaround for tbhb-dev/devtools#202: unprefixed names that the deployed fix-pr skill, the lint and test aggregates, and the docs call.
+# Unprefixed names that CI, the lint and test aggregates, and the docs call.
 # Every other Go task runs by its devtools: name, as devtools' own workflows do.
 [tasks.build]
 description = "Run devtools:build"

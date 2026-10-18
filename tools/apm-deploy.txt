@@ -6,6 +6,7 @@ devtools-agents-claude .claude/skills/analyze-session/references/LOCATE_SESSION.
 devtools-agents-claude .claude/skills/analyze-session/references/SESSION_CLI.md
 devtools-agents-claude .claude/skills/analyze-session/references/VERIFY_FIGURES.md
 devtools-agents-claude .claude/skills/analyze-session/references/WRITING_THE_RETRO.md
+devtools-agents-claude .claude/skills/analyze-session/scripts/gates.py
 devtools-agents-claude .claude/skills/analyze-session/scripts/lib.sh
 devtools-agents-claude .claude/skills/analyze-session/scripts/new-retro.sh
 devtools-agents-claude .claude/skills/analyze-session/scripts/preflight.sh
@@ -16,6 +17,7 @@ devtools-agents-claude .claude/skills/commit
 devtools-agents-claude .claude/skills/commit/SKILL.md
 devtools-agents-claude .claude/skills/commit/references/PRECONDITIONS.md
 devtools-agents-claude .claude/skills/commit/scripts/commit.sh
+devtools-agents-claude .claude/skills/commit/scripts/gates.py
 devtools-agents-claude .claude/skills/commit/scripts/guard-git.sh
 devtools-agents-claude .claude/skills/commit/scripts/lib.sh
 devtools-agents-claude .claude/skills/commit/scripts/preflight.sh
@@ -37,6 +39,7 @@ devtools-agents-claude .claude/skills/fix-prose/scripts/release-once.sh
 devtools-agents-claude .claude/skills/fix-prose/tokens.json
 devtools-agents-claude .claude/skills/merge-pr
 devtools-agents-claude .claude/skills/merge-pr/SKILL.md
+devtools-agents-claude .claude/skills/merge-pr/scripts/gates.py
 devtools-agents-claude .claude/skills/merge-pr/scripts/guard-merge.sh
 devtools-agents-claude .claude/skills/merge-pr/scripts/lib.sh
 devtools-agents-claude .claude/skills/merge-pr/scripts/populate-description.sh
@@ -49,10 +52,15 @@ devtools-agents-claude .claude/skills/merge-pr/tokens.json
 devtools-agents-claude .claude/skills/pr
 devtools-agents-claude .claude/skills/pr/SKILL.md
 devtools-agents-claude .claude/skills/pr/scripts/create-pr.sh
+devtools-agents-claude .claude/skills/pr/scripts/description.sh
+devtools-agents-claude .claude/skills/pr/scripts/gates.py
 devtools-agents-claude .claude/skills/pr/scripts/guard-gh.sh
+devtools-agents-claude .claude/skills/pr/scripts/lib.sh
 devtools-agents-claude .claude/skills/pr/scripts/preflight.sh
+devtools-agents-claude .claude/skills/pr/scripts/properties.sh
+devtools-agents-claude .claude/skills/pr/scripts/publish.sh
+devtools-agents-claude .claude/skills/pr/scripts/review.sh
 devtools-agents-claude .claude/skills/pr/scripts/scaffold-description.sh
-devtools-agents-claude .claude/skills/pr/scripts/stamp-review.sh
 devtools-agents-claude .claude/skills/pr/scripts/validate-description.sh
 devtools-agents-claude .claude/skills/pr/tokens.json
 devtools-agents-claude .claude/skills/rebase
@@ -87,7 +95,9 @@ devtools-agents-claude .claude/skills/review-squash-message/SKILL.md
 devtools-agents-claude .claude/skills/review-squash-message/tokens.json
 devtools-agents-claude .claude/skills/watch-pr
 devtools-agents-claude .claude/skills/watch-pr/SKILL.md
+devtools-agents-claude .claude/skills/watch-pr/scripts/gates.py
 devtools-agents-claude .claude/skills/watch-pr/scripts/guard-watch.sh
+devtools-agents-claude .claude/skills/watch-pr/scripts/lib.sh
 devtools-agents-claude .claude/skills/watch-pr/scripts/watch-checks.sh
 devtools-agents-claude .claude/skills/watch-pr/tokens.json
 devtools-agents-claude .claude/skills/write-pr-description
@@ -107,6 +117,7 @@ devtools-agents-codex .agents/skills/analyze-session/references/LOCATE_SESSION.m
 devtools-agents-codex .agents/skills/analyze-session/references/SESSION_CLI.md
 devtools-agents-codex .agents/skills/analyze-session/references/VERIFY_FIGURES.md
 devtools-agents-codex .agents/skills/analyze-session/references/WRITING_THE_RETRO.md
+devtools-agents-codex .agents/skills/analyze-session/scripts/gates.py
 devtools-agents-codex .agents/skills/analyze-session/scripts/lib.sh
 devtools-agents-codex .agents/skills/analyze-session/scripts/new-retro.sh
 devtools-agents-codex .agents/skills/analyze-session/scripts/preflight.sh
@@ -117,6 +128,7 @@ devtools-agents-codex .agents/skills/commit
 devtools-agents-codex .agents/skills/commit/SKILL.md
 devtools-agents-codex .agents/skills/commit/references/PRECONDITIONS.md
 devtools-agents-codex .agents/skills/commit/scripts/commit.sh
+devtools-agents-codex .agents/skills/commit/scripts/gates.py
 devtools-agents-codex .agents/skills/commit/scripts/lib.sh
 devtools-agents-codex .agents/skills/commit/scripts/preflight.sh
 devtools-agents-codex .agents/skills/commit/scripts/review.sh
@@ -133,6 +145,7 @@ devtools-agents-codex .agents/skills/fix-prose/scripts/preflight.sh
 devtools-agents-codex .agents/skills/fix-prose/tokens.json
 devtools-agents-codex .agents/skills/merge-pr
 devtools-agents-codex .agents/skills/merge-pr/SKILL.md
+devtools-agents-codex .agents/skills/merge-pr/scripts/gates.py
 devtools-agents-codex .agents/skills/merge-pr/scripts/lib.sh
 devtools-agents-codex .agents/skills/merge-pr/scripts/populate-description.sh
 devtools-agents-codex .agents/skills/merge-pr/scripts/preflight.sh
@@ -144,8 +157,13 @@ devtools-agents-codex .agents/skills/merge-pr/tokens.json
 devtools-agents-codex .agents/skills/pr
 devtools-agents-codex .agents/skills/pr/SKILL.md
 devtools-agents-codex .agents/skills/pr/scripts/create-pr.sh
+devtools-agents-codex .agents/skills/pr/scripts/description.sh
+devtools-agents-codex .agents/skills/pr/scripts/gates.py
+devtools-agents-codex .agents/skills/pr/scripts/lib.sh
 devtools-agents-codex .agents/skills/pr/scripts/preflight.sh
-devtools-agents-codex .agents/skills/pr/scripts/record-review.sh
+devtools-agents-codex .agents/skills/pr/scripts/properties.sh
+devtools-agents-codex .agents/skills/pr/scripts/publish.sh
+devtools-agents-codex .agents/skills/pr/scripts/review.sh
 devtools-agents-codex .agents/skills/pr/scripts/scaffold-description.sh
 devtools-agents-codex .agents/skills/pr/scripts/validate-description.sh
 devtools-agents-codex .agents/skills/pr/tokens.json
@@ -179,6 +197,8 @@ devtools-agents-codex .agents/skills/review-squash-message/SKILL.md
 devtools-agents-codex .agents/skills/review-squash-message/tokens.json
 devtools-agents-codex .agents/skills/watch-pr
 devtools-agents-codex .agents/skills/watch-pr/SKILL.md
+devtools-agents-codex .agents/skills/watch-pr/scripts/gates.py
+devtools-agents-codex .agents/skills/watch-pr/scripts/lib.sh
 devtools-agents-codex .agents/skills/watch-pr/scripts/watch-checks.sh
 devtools-agents-codex .agents/skills/watch-pr/tokens.json
 devtools-agents-codex .agents/skills/write-pr-description
