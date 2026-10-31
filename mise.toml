@@ -18,7 +18,7 @@ jq = "1.8.2"
 # guard-markdown backs lint-markdown-wrap and the Claude write hook.
 # devtools:update-pins moves this pin with the others, and
 # devtools:check-pins holds it to the same release.
-"go:github.com/tbhb-dev/devtools/cmd/guard-markdown" = "v0.12.0"
+"go:github.com/tbhb-dev/devtools/cmd/guard-markdown" = "v0.22.1"
 
 [env]
 DEVTOOLS_LOCK_PLATFORMS = "linux-x64,macos-arm64"

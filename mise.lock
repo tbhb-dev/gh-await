@@ -15,7 +15,7 @@ url = "https://github.com/microsoft/apm/releases/download/v0.33.0/apm-darwin-arm
 url_api = "https://api.github.com/repos/microsoft/apm/releases/assets/606234085"
 
 [[tools."go:github.com/tbhb-dev/devtools/cmd/guard-markdown"]]
-version = "0.12.0"
+version = "0.22.1"
 backend = "go:github.com/tbhb-dev/devtools/cmd/guard-markdown"
 
 [[tools.jq]]
