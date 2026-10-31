@@ -13,5 +13,5 @@ target:
   - codex
 dependencies:
   apm:
-    - tbhb-dev/devtools#v0.12.0
+    - tbhb-dev/devtools#v0.22.1
   mcp: []
